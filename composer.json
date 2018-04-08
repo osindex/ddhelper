@@ -7,7 +7,7 @@
         "name": "osi",
         "email": "yaoiluo@gmail.com"
     }],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "require": {
         "php": ">=7.0"
     },
