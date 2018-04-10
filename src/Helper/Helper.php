@@ -201,8 +201,8 @@ class Helper {
 		$client = new \GuzzleHttp\Client();
 		$location = $lng . ',' . $lat;
 
-		$key = '8c3a4fd651b433bc8492447c3be696cb';
-		$apiURL = 'http://restapi.amap.com/v3/assistant/coordinate/convert?key=' . $key . '&coordsys=gps&locations=' . urlencode($location);
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/assistant/coordinate/convert?key=' . $key . '&coordsys=gps&locations=' . urlencode($location);
 
 		$res = $client->request('GET', $apiURL);
 
@@ -222,7 +222,7 @@ class Helper {
 		// 	$address = '北京市' . $address;
 		// }
 		$client = new \GuzzleHttp\Client();
-		$key = '8c3a4fd651b433bc8492447c3be696cb';
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
 		$query = [
 			'key' => $key,
 			'city' => $city,
@@ -233,7 +233,7 @@ class Helper {
 			$query['batch'] = true;
 		}
 		$params = http_build_query($query);
-		$apiURL = 'http://restapi.amap.com/v3/geocode/geo?' . $params;
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/geocode/geo?' . $params;
 		$res = $client->request('GET', $apiURL);
 		$obj = json_decode($res->getBody());
 		$data = null;
@@ -282,8 +282,8 @@ class Helper {
 	static function geoRecode($lng, $lat) {
 		$client = new \GuzzleHttp\Client();
 		$location = $lng . ',' . $lat;
-		$key = '8c3a4fd651b433bc8492447c3be696cb';
-		$apiURL = 'http://restapi.amap.com/v3/geocode/regeo?key=' . $key . '&location=' . urlencode($location);
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/geocode/regeo?key=' . $key . '&location=' . urlencode($location);
 		$res = $client->request('GET', $apiURL);
 
 		$obj = json_decode($res->getBody());
@@ -299,8 +299,8 @@ class Helper {
 	 */
 	static function getDistance($origins, $destination) {
 		$client = new \GuzzleHttp\Client();
-		$key = '8c3a4fd651b433bc8492447c3be696cb';
-		$apiURL = 'http://restapi.amap.com/v3/distance?key=' . $key . '&origins=' . $origins . '&destination=' . $destination;
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/distance?key=' . $key . '&origins=' . $origins . '&destination=' . $destination;
 		$res = $client->request('GET', $apiURL);
 
 		$obj = json_decode($res->getBody());

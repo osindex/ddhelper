@@ -1,6 +1,5 @@
 <?php
 namespace Base\Helper;
-// Models需要在实际项目中指定...
 use Base\Models\AccountPayment;
 use Base\Models\AdminMessage;
 use Base\Models\DriverMessage;
@@ -24,7 +23,7 @@ class SendMessage {
 
 		$to = $expressRoute->toDriver->push_id;
 		if ($to) {
-			$content = "【叮咚传送】你有新的快件任务(" . $express->ddid . ")，请及时查看。";
+			$content = config('sms.name') . "你有新的快件任务(" . $express->ddid . ")，请及时查看。";
 			$extras = [
 				'target_id' => $express->id,
 				'type' => 3,
@@ -40,7 +39,7 @@ class SendMessage {
 			// 没有激活APP的时候发短信?
 			$to = $expressRoute->toDriver->mobile;
 			if ($to) {
-				$content = "【叮咚传送】你有新的快件任务(" . $express->ddid . ")，请及时登录app查看。";
+				$content = config('sms.name') . "你有新的快件任务(" . $express->ddid . ")，请及时登录app查看。";
 				$content = json_encode(compact('content', 'to'));
 				$title = '司机新任务指派';
 				$is_sms = true;
@@ -57,7 +56,7 @@ class SendMessage {
 		//发给用户
 		$to = $user->mobile;
 		if ($to) {
-			$content = "【叮咚传送】尊敬的客户，您的订单我们已经收到。叮咚传送员将尽快与您取得联系，请保持手机畅通。";
+			$content = config('sms.name') . "尊敬的客户，您的订单我们已经收到。叮咚传送员将尽快与您取得联系，请保持手机畅通。";
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件发件成功客户提示';
 			$is_sms = true;
@@ -72,7 +71,7 @@ class SendMessage {
 		$expressRoute->load('toDriver');
 		$to = $expressRoute->express->send_mobile;
 		if ($to) {
-			$content = "【叮咚传送】您好，您的订单“电话 " . $expressRoute->express->rec_mobile . "，地址 " . $expressRoute->express->rec_address . "”已由传送员 " . $expressRoute->toDriver->name . " " . $expressRoute->toDriver->mobile . " 送达。";
+			$content = config('sms.name') . "您好，您的订单“电话 " . $expressRoute->express->rec_mobile . "，地址 " . $expressRoute->express->rec_address . "”已由传送员 " . $expressRoute->toDriver->name . " " . $expressRoute->toDriver->mobile . " 送达。";
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件:[' . $expressRoute->express->id . '] 送达客户提示';
 			$is_sms = true;
@@ -85,16 +84,16 @@ class SendMessage {
 	static function sendToRec(Express $express) {
 		if ($express->number) {
 			// $load('express');
-			$url = 'https://base.ddchuansong.com/' . $express->number;
-			// $url = 'https://base.ddchuansong.com/wechatmessageview/' . $express->number;
+			$url = url($express->number);
+			// $url = url('wechatmessageview/' . $express->number);
 
 			// 短网址文档 http://open.weibo.com/wiki/2/short_url/shorten
 			// GET
-			// https://api.weibo.com/2/short_url/shorten.json?source=2500546949&url_long=https://base.ddchuansong.com/123456
+			// https://api.weibo.com/2/short_url/shorten.json?source=2500546949&url_longurl(=12345)6
 			// return
-			// {"urls":[{"result":true,"url_short":"http://t.cn/RmhWAC4","url_long":"https://base.ddchuansong.com/123456","object_type":"","type":0,"object_id":""}]}
+			// {"urls":[{"result":true,"url_short":"http://t.cn/RmhWAC4","url_long":url("123456","object_type":"","type":0,"object_id":""}])}
 
-			$content = "【叮咚传送】您有一票来自<" . $express->send_name . ">的快件正在派送，可点击 " . $url . " 查看运送状态。";
+			$content = config('sms.name') . "您有一票来自<" . $express->send_name . ">的快件正在派送，可点击 " . $url . " 查看运送状态。";
 			$to = $express->rec_mobile;
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件:[' . $express->id . '] 取件提示';
@@ -120,7 +119,7 @@ class SendMessage {
 			foreach ($openids as $to) {
 				$touser = $to;
 				$template_id = config('dingdong.ding_new_tpl');
-				$url = 'https://base.ddchuansong.com/wechatmessageview/' . $express->number;
+				$url = url('wechatmessageview/' . $express->number);
 				// route($express->ddid)
 				$color = '#FF0000';
 				$data = [
@@ -254,7 +253,7 @@ class SendMessage {
 			$state = 0;
 			if ($to) {
 				$title = '快件取消:[' . $express->ddid . '] (内码:' . $express->id . ')';
-				$content = "【叮咚传送】快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。";
+				$content = config('sms.name') . "快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。";
 				$extras = [
 					'target_id' => $express->id,
 					'type' => 3,
@@ -271,7 +270,7 @@ class SendMessage {
 					$is_sms = true;
 					$content = json_encode([
 						"to" => $to,
-						"content" => "【叮咚传送】快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。",
+						"content" => config('sms.name') . "快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。",
 					]);
 					$data = compact('title', 'driver_id', 'is_sms', 'state', 'content');
 					DriverMessage::create($data);
@@ -330,7 +329,7 @@ class SendMessage {
 			$to = $express->send_mobile;
 			$content = json_encode([
 				"to" => $to,
-				"content" => "【叮咚传送】快件 " . $express->ddid . " 已被取消，请留意。",
+				"content" => config('sms.name') . "快件 " . $express->ddid . " 已被取消，请留意。",
 			]);
 			$data = compact('title', 'user_id', 'is_web', 'state', 'content');
 			UserMessage::create($data);

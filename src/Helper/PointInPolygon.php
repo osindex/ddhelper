@@ -18,6 +18,13 @@ class PointInPolygon {
 	public $polygon;
 	private $checkResult;
 	//  @param: array( array( lat, lng ), array( y, x ));
+	// protected function __construct($poly = null)
+	// {
+	//     if ($poly != null) {
+	//         $this->polygon = $poly;
+	//     }
+	// }
+	//  @param: array( array( lat, lng ), array( y, x ));
 	public function setPolygon($array) {
 		$this->polygon = $array;
 		array_push($this->polygon, $array[0]);
