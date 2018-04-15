@@ -462,7 +462,7 @@ class Helper {
 			'lat' => null,
 		];
 		if ($obj->status == 1 and $obj->count != 0) {
-			$data['address'] = $obj->pois[0]->cityname . $obj->pois[0]->adname . $obj->pois[0]->address . $obj->pois[0]->name;
+			$data['address'] = $obj->pois[0]->pname . $obj->pois[0]->cityname . $obj->pois[0]->adname . $obj->pois[0]->address . $obj->pois[0]->name;
 			$location = $obj->pois[0]->location;
 			list($data['lng'], $data['lat']) = explode(',', $location);
 		}
