@@ -317,6 +317,17 @@ class Helper {
 	}
 
 	/**
+	 * 计算距离
+	 */
+	static function getPlaceText($keyword, $city = '010') {
+		$client = new \GuzzleHttp\Client();
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&offset=10&page=1&keywords=' . $keywords;
+		$res = $client->request('GET', $apiURL);
+		return $res;
+	}
+
+	/**
 	 * 计算环线关系
 	 */
 	static function getRing($lng, $lat) {
@@ -438,6 +449,24 @@ class Helper {
 		}
 		return null;
 
+	}
+	static function geoAddress($query, $cityCode = '010') {
+		$client = new \GuzzleHttp\Client(['expect' => false]);
+		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&city=' . $cityCode . '&keywords=' . $keywords;
+		$res = $client->request('GET', $apiURL);
+		$obj = json_decode($res->getBody());
+		$data = [
+			'address' => null,
+			'lng' => null,
+			'lat' => null,
+		];
+		if ($obj->status == 1 and $obj->count != 0) {
+			$data['address'] = $obj->pois[0]->cityname . $obj->pois[0]->adname . $obj->pois[0]->address . $obj->pois[0]->name;
+			$location = $obj->pois[0]->location;
+			list($data['lng'], $data['lat']) = explode(',', $location);
+		}
+		return $data;
 	}
 
 }

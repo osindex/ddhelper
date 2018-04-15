@@ -23,7 +23,8 @@ class SendMessage {
 
 		$to = $expressRoute->toDriver->push_id;
 		if ($to) {
-			$content = config('sms.name') . "你有新的快件任务(" . $express->ddid . ")，请及时查看。";
+			// 推送不需要APP名称
+			$content = "你有新的快件任务(" . $express->ddid . ")，请及时查看。";
 			$extras = [
 				'target_id' => $express->id,
 				'type' => 3,
