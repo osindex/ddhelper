@@ -450,7 +450,7 @@ class Helper {
 		return null;
 
 	}
-	static function geoAddress($query, $cityCode = '010') {
+	static function geoAddress($keywords, $cityCode = '010') {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
 		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&city=' . $cityCode . '&keywords=' . $keywords;
