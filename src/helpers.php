@@ -268,6 +268,18 @@ function array_only_null(array $array, array $keys, $default = null) {
 function time2int($str, $tag = ':') {
 	return str_replace($tag, '', $str);
 }
+function sortFunc($sort, $eloquent, $field = ['id', 'created_at']) {
+	if (strpos($sort, '-') === 0) {
+		$sortF = 'desc';
+	} else {
+		$sortF = 'asc';
+	}
+	$sortParam = trim($sort, '-');
+	if (!in_array($sortParam, $field)) {
+		$sortParam = 'id';
+	}
+	return $eloquent->orderBy($sortParam, $sortF);
+}
 function opType($case = 11) {
 	switch ($case) {
 	case '11':
