@@ -268,3 +268,22 @@ function array_only_null(array $array, array $keys, $default = null) {
 function time2int($str, $tag = ':') {
 	return str_replace($tag, '', $str);
 }
+function opType($case = 11) {
+	switch ($case) {
+	case '11':
+		return '取件 - 派送';
+		break;
+	case '12':
+		return '取件 - 中转';
+		break;
+	case '21':
+		return '中转 - 派送';
+		break;
+	case '22':
+		return '中转';
+		break;
+	default:
+		return '中转';
+		break;
+	}
+}
