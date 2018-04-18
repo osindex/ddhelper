@@ -468,6 +468,11 @@ class Helper {
 		}
 		return $data;
 	}
+	static function geoAddressWithRing($keywords, $cityCode = '010') {
+		$data = self::geoAddress($keywords, $cityCode = '010');
+		$data['ring'] = self::getRing($data['lng'], $data['lat']);
+		return $data;
+	}
 
 }
 
