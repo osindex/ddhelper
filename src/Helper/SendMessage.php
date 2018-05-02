@@ -8,6 +8,9 @@ use Base\Models\ExpressRoute;
 use Base\Models\User;
 use Base\Models\UserMessage;
 
+// use PhpAmqpLib\Connection\AMQPStreamConnection;
+// use PhpAmqpLib\Message\AMQPMessage;
+
 class SendMessage {
 
 	// type 1 基本通知
@@ -55,6 +58,8 @@ class SendMessage {
 
 	static function sendToSendOrder(User $user) {
 		//发给用户
+		// $amqs = Amq::getInstance();
+		// var_dump($amqs);
 		$to = $user->mobile;
 		if ($to) {
 			$content = config('sms.name') . "尊敬的客户，您的订单我们已经收到。叮咚传送员将尽快与您取得联系，请保持手机畅通。";
@@ -64,6 +69,11 @@ class SendMessage {
 			$user_id = $user->id;
 			$state = 0;
 			$data = compact('title', 'user_id', 'content', 'is_sms', 'state');
+			// $amq = [
+			// 	'type' => 'dm',
+			// 	'data' => $data,
+			// ];
+			// Amq::getInstance()->sendMsg($amq);
 			UserMessage::create($data);
 		}
 	}
@@ -94,7 +104,7 @@ class SendMessage {
 			// return
 			// {"urls":[{"result":true,"url_short":"http://t.cn/RmhWAC4","url_long":url("123456","object_type":"","type":0,"object_id":""}])}
 
-			$content = config('sms.name') . "您有一票来自<" . $express->send_name . ">的快件正在派送，可点击 " . $url . " 查看运送状态。";
+			$content = config('sms.name') . "您有一票来自<" . $express->send_name . ">的快件正在派送，配送员 " . $express->expressLatest->toDriver->name . " " . $express->expressLatest->toDriver->mobile . "，可点击 " . $url . " 查看运送状态。";
 			$to = $express->rec_mobile;
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件:[' . $express->id . '] 取件提示';
