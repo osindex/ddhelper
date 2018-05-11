@@ -1,6 +1,5 @@
 <?php
 namespace Base\Helper;
-
 use JohnLui\AliyunOSS;
 
 class OSS {
@@ -9,22 +8,30 @@ class OSS {
 		   *  经典网络下可选：杭州、上海、青岛、北京、张家口、深圳、香港、硅谷、弗吉尼亚、新加坡、悉尼、日本、法兰克福、迪拜
 		   *  VPC 网络下可选：杭州、上海、青岛、北京、张家口、深圳、硅谷、弗吉尼亚、新加坡、悉尼、日本、法兰克福、迪拜
 	*/
-	private $city = config('oss.city','北京');
+	private $city;
 	// 经典网络 or VPC
-	private $networkType = config('oss.networkType','VPC');
+	private $networkType;
 
-	private $AccessKeyId = config('oss.AccessKeyId','keyId');
-	private $AccessKeySecret = config('oss.AccessKeySecret','KeySecret');
+	private $AccessKeyId;
+	private $AccessKeySecret;
+	private $bucketName;
 	private $ossClient;
-	private $bucketName = config('oss.bucketName','bucket');
 	/**
 	 * 私有初始化 API，非 API，不用关注
 	 * @param boolean 是否使用内网
 	 */
 	public function __construct($isInternal = false) {
-		if ($this->networkType == 'VPC' && !$isInternal) {
-			throw new Exception("VPC 网络下不提供外网上传、下载等功能");
-		}
+		$conf = config('oss');
+		$this->networkType = $conf['networkType'];
+		$this->city = $conf['city'];
+		$this->AccessKeyId = $conf['AccessKeyId'];
+		$this->AccessKeySecret = $conf['AccessKeySecret'];
+		$this->bucketName = $conf['bucketName'];
+
+		// if ($this->networkType == 'VPC' && !$isInternal) {
+		// 	throw new \Exception("VPC 网络下不提供外网上传、下载等功能");
+		// 	// all use in private network
+		// }
 		$this->ossClient = AliyunOSS::boot(
 			$this->city,
 			$this->networkType,
@@ -33,6 +40,7 @@ class OSS {
 			$this->AccessKeySecret
 		);
 	}
+
 	/**
 	 * 使用外网上传文件
 	 * @param  string bucket名称
@@ -43,7 +51,7 @@ class OSS {
 	public static function publicUpload($bucketName, $ossKey, $filePath, $options = []) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->uploadFile($ossKey, $filePath, $options);
@@ -58,7 +66,7 @@ class OSS {
 	public static function privateUpload($bucketName, $ossKey, $filePath, $options = []) {
 		$oss = new OSS(true);
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->uploadFile($ossKey, $filePath, $options);
@@ -73,7 +81,7 @@ class OSS {
 	public static function publicUploadContent($bucketName, $ossKey, $content, $options = []) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->uploadContent($ossKey, $content, $options);
@@ -88,7 +96,7 @@ class OSS {
 	public static function privateUploadContent($bucketName, $ossKey, $content, $options = []) {
 		$oss = new OSS(true);
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->uploadContent($ossKey, $content, $options);
@@ -113,7 +121,7 @@ class OSS {
 	public static function privateDeleteObject($bucketName, $ossKey) {
 		$oss = new OSS(true);
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->deleteObject($bucketName, $ossKey);
@@ -139,7 +147,7 @@ class OSS {
 	public static function getPublicObjectURL($bucketName, $ossKey) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->getPublicUrl($ossKey);
@@ -148,7 +156,7 @@ class OSS {
 	public static function getPrivateObjectURLWithExpireTime($bucketName, $ossKey, DateTime $expire_time) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		$oss->ossClient->setBucket($bucketName);
 		return $oss->ossClient->getUrl($ossKey, $expire_time);
@@ -161,14 +169,14 @@ class OSS {
 	public static function getAllObjectKey($bucketName) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		return $oss->ossClient->getAllObjectKey($bucketName);
 	}
 	public static function getObjectMeta($bucketName, $osskey) {
 		$oss = new OSS();
 		if (empty($bucketName)) {
-			$bucketName = $this->bucketName;
+			$bucketName = $oss->bucketName;
 		}
 		return $oss->ossClient->getObjectMeta($bucketName, $osskey);
 	}
