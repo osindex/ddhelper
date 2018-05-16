@@ -268,7 +268,8 @@ function array_only_null(array $array, array $keys, $default = null) {
 function time2int($str, $tag = ':') {
 	return str_replace($tag, '', $str);
 }
-function sortFunc($sort, $eloquent, $field = ['id', 'created_at']) {
+// $relationTable [table,id,relation_id]
+function sortFunc($sort, $eloquent, $field = ['id', 'created_at'], $relationTable = null) {
 	if (strpos($sort, '-') === 0) {
 		$sortF = 'desc';
 	} else {
@@ -278,7 +279,12 @@ function sortFunc($sort, $eloquent, $field = ['id', 'created_at']) {
 	if (!in_array($sortParam, $field)) {
 		$sortParam = 'id';
 	}
-	return $eloquent->orderBy($sortParam, $sortF);
+	if ($relationTable) {
+		$table = $eloquent->getTable();
+		return $eloquent->select($table . '.*', DB::raw('(SELECT ' . $sortParam . ' FROM ' . $relationTable[0] . ' WHERE ' . $table . '.' . $relationTable[2] . ' = ' . $relationTable[0] . '.' . $relationTable[1] . ' ) as sort'))->orderBy('sort', $sortF);
+	} else {
+		return $eloquent->orderBy($sortParam, $sortF);
+	}
 }
 function opType($case = 11) {
 	switch ($case) {
