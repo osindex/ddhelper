@@ -280,8 +280,8 @@ function sortFunc($sort, $eloquent, $field = ['id', 'created_at'], $relationTabl
 		$sortParam = 'id';
 	}
 	if ($relationTable) {
-		$table = $eloquent->getTable();
-		return $eloquent->select($table . '.*', DB::raw('(SELECT ' . $sortParam . ' FROM ' . $relationTable[0] . ' WHERE ' . $table . '.' . $relationTable[2] . ' = ' . $relationTable[0] . '.' . $relationTable[1] . ' ) as sort'))->orderBy('sort', $sortF);
+		$table = $eloquent->getModel()->getTable();
+		return $eloquent->select($table . '.*', \Illuminate\Database\Capsule\Manager::raw('(SELECT ' . $sortParam . ' FROM ' . $relationTable[0] . ' WHERE ' . $table . '.' . $relationTable[2] . ' = ' . $relationTable[0] . '.' . $relationTable[1] . ' ) as sort'))->orderBy('sort', $sortF);
 	} else {
 		return $eloquent->orderBy($sortParam, $sortF);
 	}
