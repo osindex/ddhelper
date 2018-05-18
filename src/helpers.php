@@ -305,3 +305,16 @@ function opType($case = 11) {
 		break;
 	}
 }
+function diff_params($validata, $rec, $all = false) {
+	$result = array_diff_key($validata, $rec);
+	$return = null;
+	foreach ($result as $value) {
+		if ($value) {
+			$return .= $value . '\r\n';
+			if ($all) {
+				break;
+			}
+		}
+	}
+	return rtrim($return, '\r\n');
+}
