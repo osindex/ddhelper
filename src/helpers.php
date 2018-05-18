@@ -261,7 +261,7 @@ function userExpressPermission($state = 0) {
 function array_only_null(array $array, array $keys, $default = null) {
 	$return = [];
 	foreach ($keys as $key) {
-		$return[$key] = array_get($array, $key, $default);
+		$return[$key] = $array[$key] ?? $default;
 	}
 	return $return;
 }
