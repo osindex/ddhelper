@@ -450,6 +450,26 @@ class Helper {
 		return null;
 
 	}
+	static function gerAreaByLayer($lng, $lat, $layer_id = 1) {
+		$areas = \Base\Models\Area::where('layer_id', $layer_id)->get();
+		foreach ($areas as $a) {
+			$points = json_decode($a->points);
+			$area_map = new \Base\Helper\PointInPolygon();
+			$area_map->setPolygon($points);
+			$check = $area_map->checkPoints([[$lng, $lat]]);
+			unset($points, $area_map);
+			if ($check[0]) {
+				return ['area' => $a, 'layer_id' => $layer_id];
+			}
+			unset($a, $check);
+		}
+		$nid = \Base\Models\Layer::find($layer_id)->rollback_layer_id;
+		if ($nid) {
+			return self::gerAreaByLayer($lng, $lat, $nid);
+		} else {
+			return null;
+		}
+	}
 	static function geoAddress($keywords, $cityCode = '010') {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
 		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
