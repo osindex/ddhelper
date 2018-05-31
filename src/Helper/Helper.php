@@ -435,7 +435,7 @@ class Helper {
 	}
 
 	static function gerArea($lng, $lat) {
-		$areas = \Base\Models\Area::all();
+		$areas = \Base\Models\Area::where('is_active', 1)->get();
 		foreach ($areas as $a) {
 			$points = json_decode($a->points);
 			$area_map = new \Base\Helper\PointInPolygon();
@@ -451,7 +451,7 @@ class Helper {
 
 	}
 	static function gerAreaByLayer($lng, $lat, $layer_id = 1) {
-		$areas = \Base\Models\Area::where('layer_id', $layer_id)->get();
+		$areas = \Base\Models\Area::where('is_active', 1)->where('layer_id', $layer_id)->get();
 		foreach ($areas as $a) {
 			$points = json_decode($a->points);
 			$area_map = new \Base\Helper\PointInPolygon();
