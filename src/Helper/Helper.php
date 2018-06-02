@@ -157,25 +157,20 @@ class Helper {
 		}
 	}
 
-	static function getUniqDDid($area = null, $num = 1) {
-		// // $code = ($area==null)?'Q':$area->code;
-		// $_exnum = rand(1000,9999);
-		// // $_exnum = $code.$_rand;
-		// $key = \Base\Models\Express::where('ddid',$_exnum)->count();
-		// if($key > 0){
-		// 	$_exnum = Helper::getUniqDDid($area);
-		// 	return $_exnum;
-		// }else{
-		// 	return $_exnum;
-		// }
-
-		$arr = \Base\Models\Express::whereRaw('length(`ddid`) < 6')->pluck('ddid')->toArray();
-		if (9000 - count($arr) < $num) {
-			return false;
+	static function getUniqDDid($area = null, $num = 1, $length = 5) {
+		$maxNum = str_pad(1, $length + 1, 0);
+		$arr = \Base\Models\Express::whereRaw('length(`ddid`) <= ' . $length)->pluck('ddid')->toArray();
+		// 能否用  date('d')%2 == 1 max('ddid')  return ddid+1
+		// 		  date('d')%2 == 0 min('ddid')  return ddid-1
+		if ((count($arr) / $maxNum) > 0.8) {
+			// 加入预警通知 ?
+			if (0.9 * $maxNum - count($arr) > $num) {
+				return false;
+			}
 		}
 		$uniqarr = [];
 		while (count($uniqarr) < $num) {
-			$a = rand(1000, 9999);
+			$a = str_pad(mt_rand(1, $maxNum - 1), $length, 0, STR_PAD_LEFT);
 			if (!in_array($a, $arr)) {
 				$arr[] = $a;
 				$uniqarr[] = $a;
