@@ -146,7 +146,8 @@ class Helper {
 	 */
 	static function getUniqExnum($mobile) {
 		// $today = new \Carbon\Carbon('today');
-		$_exnum = date('md') . substr($mobile, -4) . rand(100, 999);
+		// $_exnum = date('md') . substr($mobile, -4) . rand(100, 999);
+		$_exnum = date('md') . substr($mobile, -4) . rand(10000, 99999);
 		$key = \Base\Models\Express::where('number', $_exnum)->count();
 		if ($key > 0) {
 			$_exnum = Helper::getUniqExnum($mobile);
