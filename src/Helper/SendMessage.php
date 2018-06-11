@@ -93,7 +93,7 @@ class SendMessage {
 		}
 	}
 	static function sendToRec(Express $express) {
-		if ($express->number) {
+		if ($express->number && $express->is_sms) {
 			// $load('express');
 			$url = url($express->number);
 			// $url = url('wechatmessageview/' . $express->number);
@@ -105,7 +105,7 @@ class SendMessage {
 			// {"urls":[{"result":true,"url_short":"http://t.cn/RmhWAC4","url_long":url("123456","object_type":"","type":0,"object_id":""}])}
 
 			$content = config('sms.name') . "您有一票来自<" . $express->send_name . ">的快件正在派送，配送员 " . $express->expressLatest->toDriver->name . "（" . $express->expressLatest->toDriver->mobile . "），可点击 " . $url . " 查看运送状态。";
-			$to = $express->rec_mobile;
+			$to = trim($express->rec_mobile);
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件:[' . $express->id . '] 取件提示';
 			$is_sms = true;
