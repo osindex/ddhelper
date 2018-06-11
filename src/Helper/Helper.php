@@ -132,7 +132,8 @@ class Helper {
 
 	static function getUniqTrans($express_id) {
 		// $today = new \Carbon\Carbon('today');
-		$_exnum = date('ymd') . rand(100, 999) . $express_id;
+		mt_srand();
+		$_exnum = date('ymd') . mt_rand(100, 999) . $express_id;
 		$key = \Base\Models\ExpressTransaction::where('transaction_no', $_exnum)->count();
 		if ($key > 0) {
 			$_exnum = Helper::getUniqExnum($express_id);
@@ -147,7 +148,8 @@ class Helper {
 	static function getUniqExnum($mobile) {
 		// $today = new \Carbon\Carbon('today');
 		// $_exnum = date('md') . substr($mobile, -4) . rand(100, 999);
-		$_exnum = date('md') . substr($mobile, -4) . rand(10000, 99999);
+		mt_srand();
+		$_exnum = date('md') . substr($mobile, -4) . mt_rand(10000, 99999);
 		$key = \Base\Models\Express::where('number', $_exnum)->count();
 		if ($key > 0) {
 			$_exnum = Helper::getUniqExnum($mobile);
@@ -170,6 +172,7 @@ class Helper {
 		}
 		$uniqarr = [];
 		while (count($uniqarr) < $num) {
+			mt_srand();
 			$a = str_pad(mt_rand(1, $maxNum - 1), $length, 0, STR_PAD_LEFT);
 			if (!in_array($a, $arr)) {
 				$arr[] = $a;
@@ -183,6 +186,7 @@ class Helper {
 		$chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
 		$code = '';
 		for ($i = 0; $i < $length; $i++) {
+			mt_srand();
 			$code .= $chars[mt_rand(0, strlen($chars) - 1)];
 		}
 		$check = \Base\Models\User::where('invite_code', $code)->count();
