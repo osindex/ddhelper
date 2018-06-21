@@ -56,12 +56,12 @@ class SendMessage {
 
 	}
 
-	static function sendToSendOrder(User $user) {
+	static function sendToSendOrder(User $user, $is_send_sms = 1) {
 		//发给用户
 		// $amqs = Amq::getInstance();
 		// var_dump($amqs);
 		$to = $user->mobile;
-		if ($to) {
+		if ($to && $is_send_sms) {
 			$content = config('sms.name') . "尊敬的客户，您的订单我们已经收到。叮咚传送员将尽快与您取得联系，请保持手机畅通。";
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件发件成功客户提示';
@@ -81,7 +81,8 @@ class SendMessage {
 	static function sendToSend(ExpressRoute $expressRoute) {
 		$expressRoute->load('toDriver');
 		$to = $expressRoute->express->send_mobile;
-		if ($to) {
+		$is_send_sms = $expressRoute->express->is_send_sms;
+		if ($to && $is_send_sms) {
 			$content = config('sms.name') . "您好，您的订单“电话 " . $expressRoute->express->rec_mobile . "，地址 " . $expressRoute->express->rec_address . "”已由传送员 " . $expressRoute->toDriver->name . " " . $expressRoute->toDriver->mobile . " 送达。";
 			$content = json_encode(compact('content', 'to'));
 			$title = '快件:[' . $expressRoute->express->id . '] 送达客户提示';
@@ -331,7 +332,7 @@ class SendMessage {
 		}
 	}
 	static function sendToUserCancle(Express $express, $reason = null) {
-		if ($express->send_mobile) {
+		if ($express->send_mobile && $express->is_send_sms) {
 			$title = '快件取消:[' . $express->id . ']';
 			$user_id = $express->id;
 			$is_web = true;
