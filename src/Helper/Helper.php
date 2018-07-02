@@ -201,7 +201,7 @@ class Helper {
 		$client = new \GuzzleHttp\Client();
 		$location = $lng . ',' . $lat;
 
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/assistant/coordinate/convert?key=' . $key . '&coordsys=gps&locations=' . urlencode($location);
 
 		$res = $client->request('GET', $apiURL);
@@ -222,7 +222,7 @@ class Helper {
 		// 	$address = '北京市' . $address;
 		// }
 		$client = new \GuzzleHttp\Client();
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$query = [
 			'key' => $key,
 			'city' => $city,
@@ -282,7 +282,7 @@ class Helper {
 	static function geoRecode($lng, $lat) {
 		$client = new \GuzzleHttp\Client();
 		$location = $lng . ',' . $lat;
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/geocode/regeo?key=' . $key . '&location=' . urlencode($location);
 		$res = $client->request('GET', $apiURL);
 
@@ -299,7 +299,7 @@ class Helper {
 	 */
 	static function getDistance($origins, $destination) {
 		$client = new \GuzzleHttp\Client();
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/distance?key=' . $key . '&origins=' . $origins . '&destination=' . $destination;
 		$res = $client->request('GET', $apiURL);
 
@@ -321,7 +321,7 @@ class Helper {
 	 */
 	static function getPlaceText($keyword, $city = '010') {
 		$client = new \GuzzleHttp\Client();
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&offset=10&page=1&keywords=' . $keywords;
 		$res = $client->request('GET', $apiURL);
 		return $res;
@@ -472,7 +472,7 @@ class Helper {
 	}
 	static function geoAddress($keywords, $cityCode = '010') {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
-		$key = config('amap.key', 'bfdb61a0259970baca9a68b9525b8faa');
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&city=' . $cityCode . '&keywords=' . $keywords;
 		$res = $client->request('GET', $apiURL);
 		$obj = json_decode($res->getBody());

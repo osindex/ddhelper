@@ -27,7 +27,7 @@ class SendMessage {
 		$to = $expressRoute->toDriver->push_id;
 		if ($to) {
 			// 推送不需要APP名称
-			$content = "你有新的快件任务(" . $express->ddid . ")，请及时查看。";
+			$content = "你有新的快件任务(" . $express->est_rec_area . $express->ddid . ")，请及时查看。";
 			$extras = [
 				'target_id' => $express->id,
 				'type' => 3,
@@ -43,7 +43,7 @@ class SendMessage {
 			// 没有激活APP的时候发短信?
 			$to = $expressRoute->toDriver->mobile;
 			if ($to) {
-				$content = config('sms.name') . "你有新的快件任务(" . $express->ddid . ")，请及时登录app查看。";
+				$content = config('sms.name') . "你有新的快件任务(" . $express->est_rec_area . $express->ddid . ")，请及时登录app查看。";
 				$content = json_encode(compact('content', 'to'));
 				$title = '司机新任务指派';
 				$is_sms = true;
@@ -132,14 +132,14 @@ class SendMessage {
 				$touser = $to;
 				$template_id = config('dingdong.ding_new_tpl');
 				$url = url('wechatmessageview/' . $express->number);
-				// route($express->ddid)
+				// route($express->est_rec_area.$express->ddid)
 				$color = '#FF0000';
 				$data = [
 					"first" => "有新的快件。\n",
 					"keyword1" => $express->send_name ? $express->send_name : ($express->shop ? $express->shop->name : '--'),
 					"keyword2" => $express->send_mobile ? $express->send_mobile : ($express->shop ? $express->shop->send_mobile : '--'),
 					"keyword3" => $express->send_address ? $express->send_address : ($express->shop ? $express->shop->send_address : '--'),
-					"remark" => "【叮咚号】" . $express->ddid . "\n【收件人】" . $express->rec_name . " (" . $express->rec_mobile . ")\n【地址】" . $express->rec_address . "\n【发件时间】" . $express->created_at . "\n\n", //【建议】$addMessage",
+					"remark" => "【叮咚号】" . $express->est_rec_area . $express->ddid . "\n【收件人】" . $express->rec_name . " (" . $express->rec_mobile . ")\n【地址】" . $express->rec_address . "\n【发件时间】" . $express->created_at . "\n\n", //【建议】$addMessage",
 				];
 				$content = compact('touser', 'template_id', 'url', 'data');
 				$content = json_encode(compact('content', 'to'));
@@ -264,8 +264,8 @@ class SendMessage {
 			$to = $express->expressOneRoute->toDriver->push_id;
 			$state = 0;
 			if ($to) {
-				$title = '快件取消:[' . $express->ddid . '] (内码:' . $express->id . ')';
-				$content = config('sms.name') . "快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。";
+				$title = '快件取消:[' . $express->est_rec_area . $express->ddid . '] (内码:' . $express->id . ')';
+				$content = config('sms.name') . "快件 " . $express->est_rec_area . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。";
 				$extras = [
 					'target_id' => $express->id,
 					'type' => 3,
@@ -277,12 +277,12 @@ class SendMessage {
 			} else {
 				$to = $express->expressOneRoute->toDriver->mobile;
 				if ($to) {
-					$title = '快件取消:[' . $express->ddid . '] (内码:' . $express->id . ')';
+					$title = '快件取消:[' . $express->est_rec_area . $express->ddid . '] (内码:' . $express->id . ')';
 					// 司机更熟悉这个id
 					$is_sms = true;
 					$content = json_encode([
 						"to" => $to,
-						"content" => config('sms.name') . "快件 " . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。",
+						"content" => config('sms.name') . "快件 " . $express->est_rec_area . $express->ddid . " 已被取消，取件地址 " . $express->send_address . "，请留意。",
 					]);
 					$data = compact('title', 'driver_id', 'is_sms', 'state', 'content');
 					DriverMessage::create($data);
@@ -315,7 +315,7 @@ class SendMessage {
 		foreach ($openids as $to) {
 			$data = [
 				"first" => $title . "\n",
-				"keyword1" => $express ? $express->ddid : '--',
+				"keyword1" => $express ? $express->est_rec_area . $express->ddid : '--',
 				"keyword2" => $reason,
 				"remark" => $remark,
 			];
@@ -341,7 +341,7 @@ class SendMessage {
 			$to = $express->send_mobile;
 			$content = json_encode([
 				"to" => $to,
-				"content" => config('sms.name') . "快件 " . $express->ddid . " 已被取消，请留意。",
+				"content" => config('sms.name') . "快件 " . $express->est_rec_area . $express->ddid . " 已被取消，请留意。",
 			]);
 			$data = compact('title', 'user_id', 'is_web', 'state', 'content');
 			UserMessage::create($data);
@@ -358,6 +358,24 @@ class SendMessage {
 			}
 		} else {
 			return '当日';
+		}
+	}
+	static function sendToUserPick(Express $express, $drivermobile = '-') {
+		if ($express->send_mobile && $express->is_pickup_sms) {
+			$title = '快件取件:[' . $express->id . ']';
+			$user_id = $express->user_id;
+			$is_sms = true;
+			$state = 0;
+			// 默认发送
+			$to = $express->send_mobile;
+			$name = $express->shop->name ? $express->shop->name : "-";
+			$content = json_encode([
+				"to" => $to,
+				"content" => config('sms.name') . "尊敬的客户，您的“" . $name . "”快件已下单成功，快件叮咚码为“" . $express->est_rec_area . $express->ddid . "”，请在取货司机到达时与司机核对叮咚码。取货司机已出发，联系电话：“" . $drivermobile . "”。祝您生活愉快！",
+				// 【叮咚传送】尊敬的客户，您的“, #accountname#”快件已下单成功，快件叮咚码为“#ddid#” “#drivermobile#”。祝您生活愉快！
+			]);
+			$data = compact('title', 'user_id', 'is_sms', 'state', 'content');
+			UserMessage::create($data);
 		}
 	}
 }
