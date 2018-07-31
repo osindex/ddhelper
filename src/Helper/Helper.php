@@ -239,19 +239,32 @@ class Helper {
 		$data = null;
 		if ($obj->status == 1 and $obj->count != 0) {
 			if (is_array($address)) {
+				$bd = [];
 				foreach ($address as $key => $value) {
+					$bd[$key] = self::getBMapLngLat($value, $city);
 					$data[$key]['address'] = $obj->geocodes[$key]->formatted_address;
 					$data[$key]['location'] = $obj->geocodes[$key]->location;
 					$data[$key]['district'] = $obj->geocodes[$key]->province . $obj->geocodes[$key]->city;
 					list($data[$key]['lng'], $data[$key]['lat']) = explode(',', $data[$key]['location']);
 					$data[$key]['ring'] = self::getRing($data[$key]['lng'], $data[$key]['lat']);
 
+					$distance = self::get_distance($bd[$key], $data[$key]['location']);
+					if ($distance > 1) {
+						$data[$key] = null;
+					}
 				}
 			} else {
+				$bd = self::getBMapLngLat($address, $city);
 				$data['address'] = $obj->geocodes[0]->formatted_address;
 				$data['location'] = $obj->geocodes[0]->location;
 				$data['district'] = $obj->geocodes[0]->province . $obj->geocodes[0]->city;
 				list($data['lng'], $data['lat']) = explode(',', $data['location']);
+				$amap = explode(',', $data['location']);
+				$distance = self::get_distance($bd, $amap);
+				// 界定值 1KM
+				if ($distance > 1) {
+					$data = null;
+				}
 			}
 		}
 		return $data;
@@ -261,7 +274,12 @@ class Helper {
 	 */
 	static function geoDecodeWithRing($address, $city = '010') {
 		$data = self::geoDecode($address, $city);
-		$data['ring'] = self::getRing($data['lng'], $data['lat']);
+		// 分城市
+		if ($city == '010') {
+			$data['ring'] = self::getRing($data['lng'], $data['lat']);
+		} else {
+			$data['ring'] = null;
+		}
 		return $data;
 	}
 	/**
@@ -492,6 +510,51 @@ class Helper {
 		$data = self::geoAddress($keywords);
 		$data['ring'] = self::getRing($data['lng'], $data['lat']);
 		return $data;
+	}
+	static function getBMapLngLat($address, $city_code = '010') {
+		switch ($city_code) {
+		case '010':
+			$city = '北京市';
+			break;
+		case '021':
+			$city = '上海市';
+			break;
+		case '028':
+			$city = '成都市';
+			break;
+
+		default:
+			$city = '北京市';
+			break;
+		}
+		$ak = 'YCQdpq3ssE045BfqAc7edDTceKwugern';
+
+		$client = new \GuzzleHttp\Client();
+		$apiURL = 'https://api.map.baidu.com/geocoder/v2/?output=json&ret_coordtype=gcj02ll&ak=' . $ak . '&address="' . urlencode($address) . '"&city=' . urlencode($city);
+		$res = $client->request('GET', $apiURL);
+		$obj = json_decode($res->getBody());
+		// dd($obj);
+		$res = null;
+		if ($obj->status == 0) {
+			if ($obj->result->precise = 1) {
+				$res = $obj->result->location;
+			}
+		}
+		return $res;
+		// return json_encode($res);
+	}
+	static function get_distance($from, $to, $km = true, $decimal = 2) {
+		$from = array_values(object_array($from));
+		$to = array_values(object_array($to));
+		sort($from);
+		sort($to);
+		$EARTH_RADIUS = 6370.996; // 地球半径系数
+		$distance = $EARTH_RADIUS * 2 * asin(sqrt(pow(sin(($from[0] * pi() / 180 - $to[0] * pi() / 180) / 2), 2) + cos($from[0] * pi() / 180) * cos($to[0] * pi() / 180) * pow(sin(($from[1] * pi() / 180 - $to[1] * pi() / 180) / 2), 2))) * 1000;
+
+		if ($km) {
+			$distance = $distance / 1000;
+		}
+		return round($distance, $decimal);
 	}
 }
 
