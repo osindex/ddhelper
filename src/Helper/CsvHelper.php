@@ -32,11 +32,13 @@ class CsvHelper {
 			$dataArr = $data->offset($i * $limit)->limit($limit)->get()->toArray();
 			foreach ($dataArr as $a) {
 				$cnt++;
-				if ($limit == $cnt) {
+				if ($limit <= $cnt) {
 					//刷新一下输出buffer，防止由于数据过多造成问题
-					ob_flush();
-					flush();
-					$cnt = 0;
+					if (ob_get_level() > 0) {
+						ob_flush();
+						flush();
+						$cnt = 0;
+					}
 				}
 				$temp = [];
 				foreach ($head as $key => $value) {
@@ -64,10 +66,10 @@ class CsvHelper {
 			unlink($file); //删除csv临时文件
 		}
 		$baseFileName = basename($filename);
-		$OssFileName = 'zip/' . date('Y-m-d') . '/' . date('H_i_s') . mt_rand(0, 9999) . $baseFileName;
+		$OssFileName = 'zip/' . date('Y-m-d') . '/' . date('H_i_s') . mt_rand(0, 9999) . '_' . $baseFileName;
 		// 上传到阿里云
-		\Base\Helper\OSS::privateUpload('ddchuansong', $OssFileName, $filename, ['ContentType' => 'application/zip']);
-		@unlink($filename);
+		// \Base\Helper\OSS::privateUpload('ddchuansong', $OssFileName, $filename, ['ContentType' => 'application/zip']);
+		// @unlink($filename);
 		return ossUrl($OssFileName);
 	}
 }
