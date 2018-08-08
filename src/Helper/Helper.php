@@ -530,7 +530,7 @@ class Helper {
 		$ak = 'YCQdpq3ssE045BfqAc7edDTceKwugern';
 
 		$client = new \GuzzleHttp\Client();
-		$apiURL = 'https://api.map.baidu.com/geocoder/v2/?output=json&ret_coordtype=gcj02ll&ak=' . $ak . '&address="' . urlencode($address) . '"&city=' . urlencode($city);
+		$apiURL = 'https://api.map.baidu.com/geocoder/v2/?output=json&ret_coordtype=gcj02&ak=' . $ak . '&address="' . urlencode($address) . '"&city=' . urlencode($city);
 		$res = $client->request('GET', $apiURL);
 		$obj = json_decode($res->getBody());
 		// dd($obj);
