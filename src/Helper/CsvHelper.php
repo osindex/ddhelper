@@ -68,8 +68,72 @@ class CsvHelper {
 		$baseFileName = basename($filename);
 		$OssFileName = 'zip/' . date('Y-m-d') . '/' . date('H_i_s') . mt_rand(0, 9999) . '_' . $baseFileName;
 		// 上传到阿里云
-		// \Base\Helper\OSS::privateUpload('ddchuansong', $OssFileName, $filename, ['ContentType' => 'application/zip']);
-		// @unlink($filename);
+		\Base\Helper\OSS::privateUpload('ddchuansong', $OssFileName, $filename, ['ContentType' => 'application/zip']);
+		@unlink($filename);
+		return ossUrl($OssFileName);
+	}
+
+	/**
+	 * @param array $head 头部数据
+	 * @param array $data 主体数据
+	 * @param string $mark
+	 * @param int $limit
+	 * @param array $desc
+	 * @return string
+	 */
+	static function putCsvByResult(array $head, array $data, $mark = 'dml', $limit = 100000, array $desc = []) {
+		set_time_limit(0);
+		$time = time();
+		$filename_tmp = $mark . '_' . $time . '.csv'; //临时文件名称
+		$fp = fopen($filename_tmp, 'w'); //生成临时文件
+		if (!empty($head)) {
+			foreach ($head as $key => $value) {
+				$head[$key] = iconv('utf-8', 'gbk', $value);
+			}
+			if (!empty($desc)) {
+				foreach ($desc as $k => $v) {
+					$desc[$k] = iconv('utf-8', 'gbk', $v);
+				}
+			}
+			fputcsv($fp, array_merge($head, $desc));
+		}
+		$num = 0;
+		//每隔$limit行，刷新一下输出buffer，不要太大，也不要太小
+		$limit = 100000;
+		//逐行取出数据，不浪费内存
+		$count = count($data);
+		if ($count > 0) {
+			for ($i = 0; $i < $count; $i++) {
+				$num++;
+				//刷新一下输出buffer，防止由于数据过多造成问题
+				if ($limit == $num) {
+					ob_flush();
+					flush();
+					$num = 0;
+				}
+				$row = $data[$i];
+				foreach ($row as $key => $value) {
+					$row[$key] = iconv('utf-8', 'gbk', $value);
+				}
+				fputcsv($fp, $row);
+			}
+		}
+		fclose($fp);
+
+		//文件压缩
+		$zip = new \ZipArchive();
+		$filename = $mark . ".zip";
+		$zip->open($filename, \ZipArchive::CREATE); //打开压缩包
+		$zip->addFile($filename_tmp, basename($filename_tmp)); //向压缩包中添加文件
+		$zip->close(); //关闭压缩包
+		if (file_exists($filename_tmp)) {
+			unlink($filename_tmp); //删除csv临时文件
+		}
+		$baseFileName = basename($filename);
+		$OssFileName = 'zip/' . date('Y-m-d') . '/' . date('H_i_s') . mt_rand(0, 9999) . '_' . $baseFileName;
+		// 上传到阿里云
+		\Base\Helper\OSS::privateUpload('ddchuansong', $OssFileName, $filename, ['ContentType' => 'application/zip']);
+		@unlink($filename);
 		return ossUrl($OssFileName);
 	}
 }
