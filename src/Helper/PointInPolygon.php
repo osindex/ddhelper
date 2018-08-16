@@ -27,8 +27,10 @@ class PointInPolygon {
 	//  @param: array( array( lat, lng ), array( y, x ));
 	public function setPolygon($array) {
 		$this->polygon = $array;
-		array_push($this->polygon, $array[0]);
-		$this->checkResult = false;
+		if (!is_null($this->polygon)) {
+			array_push($this->polygon, $array[0]);
+			$this->checkResult = false;
+		}
 	}
 	//  @param: array( array( lat, lng ), array( y, x ));
 	public function checkPoints($points) {

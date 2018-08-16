@@ -238,32 +238,33 @@ class Helper {
 		$data = null;
 		if ($obj->status == 1 and $obj->count != 0) {
 			if (is_array($address)) {
-				$bd = [];
+				// $bd = [];
 				foreach ($address as $key => $value) {
-					$bd[$key] = self::getBMapLngLat($value);
 					$data[$key]['address'] = $obj->geocodes[$key]->formatted_address;
 					$data[$key]['location'] = $obj->geocodes[$key]->location;
 					$data[$key]['district'] = $obj->geocodes[$key]->province . $obj->geocodes[$key]->city;
 					list($data[$key]['lng'], $data[$key]['lat']) = explode(',', $data[$key]['location']);
 					$data[$key]['ring'] = self::getRing($data[$key]['lng'], $data[$key]['lat']);
 
-					$distance = self::get_distance($bd[$key], $data[$key]['location']);
-					if ($distance > 1) {
-						$data[$key] = null;
-					}
+					// $bd[$key] = self::getBMapLngLat($value);
+					// $distance = self::get_distance($bd[$key], $data[$key]['location']);
+					// if ($distance > 1) {
+					// 	$data[$key] = null;
+					// }
 				}
 			} else {
-				$bd = self::getBMapLngLat($address);
 				$data['address'] = $obj->geocodes[0]->formatted_address;
 				$data['location'] = $obj->geocodes[0]->location;
 				$data['district'] = $obj->geocodes[0]->province . $obj->geocodes[0]->city;
 				list($data['lng'], $data['lat']) = explode(',', $data['location']);
 				$amap = explode(',', $data['location']);
-				$distance = self::get_distance($bd, $amap);
-				// 界定值 1KM
-				if ($distance > 1) {
-					$data = null;
-				}
+
+				// $bd = self::getBMapLngLat($address);
+				// $distance = self::get_distance($bd, $amap);
+				// // 界定值 1KM
+				// if ($distance > 1) {
+				// 	$data = null;
+				// }
 			}
 		}
 		return $data;
@@ -274,7 +275,7 @@ class Helper {
 	static function geoDecodeWithRing($address) {
 		$data = self::geoDecode($address);
 		// 分城市
-		if ($city == '010') {
+		if (isset($data['citycode']) && $data['citycode'] == '010') {
 			$data['ring'] = self::getRing($data['lng'], $data['lat']);
 		} else {
 			$data['ring'] = null;
