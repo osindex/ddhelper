@@ -217,7 +217,7 @@ class Helper {
 	/**
 	 * 获取坐标
 	 */
-	static function geoDecode($address, $city = '010') {
+	static function geoDecode($address) {
 		// if (strpos($address,'北京') === false) {
 		// 	$address = '北京市' . $address;
 		// }
@@ -225,7 +225,6 @@ class Helper {
 		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$query = [
 			'key' => $key,
-			'city' => $city,
 			'address' => $address,
 		];
 		if (is_array($address)) {
@@ -239,19 +238,34 @@ class Helper {
 		$data = null;
 		if ($obj->status == 1 and $obj->count != 0) {
 			if (is_array($address)) {
+				$bd = [];
 				foreach ($address as $key => $value) {
+					// $bd[$key] = self::getBMapLngLat($value);
 					$data[$key]['address'] = $obj->geocodes[$key]->formatted_address;
 					$data[$key]['location'] = $obj->geocodes[$key]->location;
 					$data[$key]['district'] = $obj->geocodes[$key]->province . $obj->geocodes[$key]->city;
 					list($data[$key]['lng'], $data[$key]['lat']) = explode(',', $data[$key]['location']);
 					$data[$key]['ring'] = self::getRing($data[$key]['lng'], $data[$key]['lat']);
+					$data[$key]['citycode'] = $obj->geocodes[$key]->citycode;
 
+					// $distance = self::get_distance($bd[$key], $data[$key]['location']);
+					// if ($distance > 1) {
+					// 	$data[$key] = null;
+					// }
 				}
 			} else {
+				// $bd = self::getBMapLngLat($address);
 				$data['address'] = $obj->geocodes[0]->formatted_address;
 				$data['location'] = $obj->geocodes[0]->location;
 				$data['district'] = $obj->geocodes[0]->province . $obj->geocodes[0]->city;
 				list($data['lng'], $data['lat']) = explode(',', $data['location']);
+				$data['citycode'] = $obj->geocodes[0]->citycode;
+				// $amap = explode(',', $data['location']);
+				// $distance = self::get_distance($bd, $amap);
+				// // 界定值 1KM
+				// if ($distance > 1) {
+				// 	$data = null;
+				// }
 			}
 		}
 		return $data;
@@ -259,20 +273,25 @@ class Helper {
 	/**
 	 * 获取坐标及环线
 	 */
-	static function geoDecodeWithRing($address, $city = '010') {
-		$data = self::geoDecode($address, $city);
-		$data['ring'] = self::getRing($data['lng'], $data['lat']);
+	static function geoDecodeWithRing($address) {
+		$data = self::geoDecode($address);
+		// 分城市
+		if (isset($data['citycode']) && $data['citycode'] == '010') {
+			$data['ring'] = self::getRing($data['lng'], $data['lat']);
+		} else {
+			$data['ring'] = null;
+		}
 		return $data;
 	}
 	/**
 	 * 获取坐标
 	 */
-	static function geoDecodeBatchWithRing($addresses, $city = '010') {
+	static function geoDecodeBatchWithRing($addresses) {
 		$collect = collect($addresses)->chunk(10)->toArray();
 		// 高德接口 每次最多10个
 		$return = [];
 		foreach ($collect as $address) {
-			$return += self::geoDecode($address, $city);
+			$return += self::geoDecode($address);
 		}
 		return collect($return)->collapse()->toArray();
 	}
@@ -319,7 +338,7 @@ class Helper {
 	/**
 	 * 计算距离
 	 */
-	static function getPlaceText($keyword, $city = '010') {
+	static function getPlaceText($keyword) {
 		$client = new \GuzzleHttp\Client();
 		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
 		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&offset=10&page=1&keywords=' . $keywords;
@@ -355,24 +374,41 @@ class Helper {
 	/**
 	 * 计算金额
 	 */
-	static function getAmount($shop, $ring, $distance = null, $product_id = 1) {
-
+	// static function getAmount($shop, $ring, $distance = null, $product_id = 1, $city_code = '010') {
+	static function getAmount($expressinfo, $channel_id = 0) {
+		// expressinfo['city_code']
+		// expressinfo['city_code']
 		// 等待优化
-		if ($shop->user && $shop->user->channel_id) {
-			$channel_id = $shop->user->channel_id;
-		} else {
-			$channel_id = 0;
-		}
-
+		// if ($shop->user && $shop->user->channel_id) {
+		// 	$channel_id = $shop->user->channel_id;
+		// } else {
+		// 	$channel_id = 0;
+		// }
+		// $product_id = $expressinfo['product_id'];
+		// 应该设置一个城市默认基础价
 		$amount = 30;
-
 		//基础价格 筛选环线
-		$product_price = \Base\Models\ProductPrice::where('product_id', $product_id)->where('end_ring', $ring)->first();
-
+		if (!isset($expressinfo['city_code'])) {
+			$expressinfo['city_code'] = '010';
+		}
+		switch ($expressinfo['city_code']) {
+		case '010':
+			$product_price = self::amount010($expressinfo);
+			break;
+		case '021':
+			// distance
+			$product_price = self::amount021($expressinfo);
+			break;
+		default:
+			// 默认北京计价策略
+			$product_price = self::amount010($expressinfo);
+			break;
+		}
+		// var_dump($product_price);
 		if (!is_null($product_price)) {
 			$channel_price = \Base\Models\ChannelPrice::where('product_price_id', $product_price->id)
 				->where('channel_id', $channel_id)->first();
-
+			// var_dump($channel_price);
 			if (!is_null($channel_price)) {
 				//渠道优惠
 				$amount = $product_price->price - abs($channel_price->amount);
@@ -381,8 +417,14 @@ class Helper {
 			}
 		}
 		$amount = $amount > 0 ? $amount : 0;
-
 		return $amount;
+	}
+	static function amount010($expressinfo) {
+		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('end_ring', $expressinfo['est_rec_ring'])->where('city_code', $expressinfo['city_code'])->first();
+	}
+	static function amount021($expressinfo) {
+		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('distance', 'asc')->orderBy('price', 'asc')->first();
+		// ->where('start_area', $expressinfo['est_send_area'])->where('end_area', $expressinfo['est_rec_area'])
 	}
 
 	/**
@@ -395,7 +437,7 @@ class Helper {
 		$_ori = $sendaddress['lng'] . ',' . $sendaddress['lat'];
 		$_des = $lnglat['lng'] . ',' . $lnglat['lat'];
 		$distance = $helper->getDistance($_ori, $_des);
-		$amount = $helper->getAmount($shop, $lnglat['ring'], isset($distance[0]) ? $distance[0] : 5);
+		$amount = $helper->getAmount($shop, $lnglat['ring'], isset($distance[0]) ? $distance[0] : 5, $lnglat);
 
 		$data['lnglat'] = $lnglat;
 		$data['dis'] = isset($distance[0]['distance']) ? $distance[0]['distance'] : 5;
@@ -470,10 +512,11 @@ class Helper {
 			return null;
 		}
 	}
-	static function geoAddress($keywords, $cityCode = '010') {
+	static function geoAddress($keywords) {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
 		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
-		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&city=' . $cityCode . '&keywords=' . $keywords;
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords;
+		//&city=' . $cityCode . '
 		$res = $client->request('GET', $apiURL);
 		$obj = json_decode($res->getBody());
 		$data = [
@@ -488,10 +531,67 @@ class Helper {
 		}
 		return $data;
 	}
-	static function geoAddressWithRing($keywords, $cityCode = '010') {
+	static function geoAddressWithRing($keywords) {
 		$data = self::geoAddress($keywords);
 		$data['ring'] = self::getRing($data['lng'], $data['lat']);
 		return $data;
+	}
+	static function getBMapLngLat($address) {
+		// switch ($city_code) {
+		// case '010':
+		// 	$city = '北京市';
+		// 	break;
+		// case '021':
+		// 	$city = '上海市';
+		// 	break;
+		// case '028':
+		// 	$city = '成都市';
+		// 	break;
+
+		// default:
+		// 	$city = '北京市';
+		// 	break;
+		// }
+		$ak = 'YCQdpq3ssE045BfqAc7edDTceKwugern';
+
+		$client = new \GuzzleHttp\Client();
+		$apiURL = 'https://api.map.baidu.com/geocoder/v2/?output=json&ret_coordtype=gcj02ll&ak=' . $ak . '&address=' . urlencode($address); //.'&city=' . urlencode($city);
+		$res = $client->request('GET', $apiURL);
+		$obj = json_decode($res->getBody());
+		// dd($obj);
+		$res = null;
+		if ($obj->status == 0) {
+			if ($obj->result->precise = 1) {
+				$res = $obj->result->location;
+			}
+		}
+		return $res;
+		// return json_encode($res);
+	}
+	static function get_distance($from, $to, $km = true, $decimal = 2) {
+		$from = array_values(object_array($from));
+		$to = array_values(object_array($to));
+		sort($from);
+		sort($to);
+		$EARTH_RADIUS = 6370.996; // 地球半径系数
+		$distance = $EARTH_RADIUS * 2 * asin(sqrt(pow(sin(($from[0] * pi() / 180 - $to[0] * pi() / 180) / 2), 2) + cos($from[0] * pi() / 180) * cos($to[0] * pi() / 180) * pow(sin(($from[1] * pi() / 180 - $to[1] * pi() / 180) / 2), 2))) * 1000;
+
+		if ($km) {
+			$distance = $distance / 1000;
+		}
+		return round($distance, $decimal);
+	}
+	static function geoReGeoCode($lng, $lat) {
+		$client = new \GuzzleHttp\Client(['expect' => false]);
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
+		$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/geocode/regeo?key=' . $key . '&location=' . $lng . ',' . $lat . '&poitype=&radius=&extensions=base&batch=false&roadlevel=0';
+		$res = $client->request('GET', $apiURL);
+		$obj = json_decode($res->getBody());
+		$cityCode = '010';
+		if ($obj->status == 1) {
+			$cityCode = $obj->regeocode->addressComponent->citycode;
+		}
+		return $cityCode;
 	}
 }
 

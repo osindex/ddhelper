@@ -318,3 +318,15 @@ function diff_params($validata, $rec, $all = false) {
 	}
 	return rtrim($return, '\r\n');
 }
+//PHP stdClass Object转array
+function object_array($array) {
+	if (is_object($array)) {
+		$array = json_decode(json_encode($array), 1);
+	}
+	if (is_array($array)) {
+		foreach ($array as $key => $value) {
+			$array[$key] = object_array($value);
+		}
+	}
+	return $array;
+}
