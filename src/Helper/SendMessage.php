@@ -93,7 +93,7 @@ class SendMessage {
 			UserMessage::create($data);
 		}
 	}
-	static function sendToRec(Express $express) {
+	static function sendToRec(Express $express,$delay=0) {
 		if ($express->number && $express->is_sms) {
 			// $load('express');
 			$url = url($express->number);
@@ -112,7 +112,13 @@ class SendMessage {
 			$is_sms = true;
 			$user_id = 0;
 			$state = 0;
-			$data = compact('title', 'user_id', 'content', 'is_sms', 'state');
+
+			$send_after = NULL;
+			if($delay > 0){
+				$send_after = \Carbon\Carbon::now()->copy()->addMinutes($delay);
+			}
+
+			$data = compact('title', 'user_id', 'content', 'is_sms', 'state','send_after');
 			// 应该有个customermessage 但是 也可以归纳到user
 			UserMessage::create($data);
 		}
