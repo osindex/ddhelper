@@ -541,6 +541,22 @@ class Helper {
 		}
 		return $data;
 	}
+
+	static function geoAddressAll($keywords,$city_code) {
+		$client = new \GuzzleHttp\Client(['expect' => false]);
+		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
+		if($city_code){
+			$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords . '&city=' . $city_code;
+		}else{
+			$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords;
+		}
+		//$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords;
+		//&city=' . $cityCode . '
+		$res = $client->request('GET', $apiURL);
+		$obj = json_decode($res->getBody());
+		return $obj;
+	}
+	
 	static function geoAddressWithRing($keywords) {
 		$data = self::geoAddress($keywords);
 		$data['ring'] = self::getRing($data['lng'], $data['lat']);
