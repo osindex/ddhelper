@@ -451,7 +451,7 @@ class Helper {
 		}
 
 		// 补充大闸蟹
-		if($expressinfo['city_code'] == '021' && $expressinfo['product_id']) == 4){
+		if($expressinfo['city_code'] == '021' && $expressinfo['product_id'] == 4){
 			$weight = (int)$expressinfo['cargo_weight'];
 			//定一个规则
 			$famount = 12;
