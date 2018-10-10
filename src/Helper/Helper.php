@@ -416,6 +416,16 @@ class Helper {
 				$amount = $product_price->price;
 			}
 		}
+
+		// 补充大闸蟹
+		if($expressinfo['city_code'] == '021' && $expressinfo['product_id']) == 4){
+			$weight = (int)$expressinfo['cargo_weight'];
+			//定一个规则
+			$famount = 12;
+			$samount = 4;
+			$amount = $weight > 1 ? $famount + $samount * ($weight-1):$famount;
+		}
+		
 		$amount = $amount > 0 ? $amount : 0;
 		return $amount;
 	}
