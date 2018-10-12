@@ -450,13 +450,19 @@ class Helper {
 			}
 		}
 
-		// 补充大闸蟹
-		if($expressinfo['city_code'] == '021' && $expressinfo['product_id'] == 4){
+		// 补充重量加价
+		if(isset($expressinfo['cargo_weight'])){
 			$weight = (int)$expressinfo['cargo_weight'];
-			//定一个规则
-			$famount = 12;
-			$samount = 4;
-			$amount = $weight > 1 ? $famount + $samount * ($weight-1):$famount;
+			if($expressinfo['city_code'] == '021' && $expressinfo['product_id'] == 4){
+				//大闸蟹 1/1,2/1
+				// $famount = 12;
+				$add_amount = 2;
+				$amount = $weight > 1 ? $amount + $add_amount * ($weight-1):$amount;
+			}else{
+				//其他 1/10,2/1
+				$add_amount = 2;
+				$amount = $weight > 10 ? $amount + $add_amount * ($weight-10):$amount;
+			}
 		}
 		
 		$amount = $amount > 0 ? $amount : 0;
