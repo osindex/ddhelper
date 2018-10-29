@@ -432,6 +432,9 @@ class Helper {
 			// distance
 			$product_price = self::amount021($expressinfo);
 			break;
+		case '0755': //深圳计价
+			$product_price = self::amount0755($expressinfo);
+			break;
 		default:
 			// 默认北京计价策略
 			$product_price = self::amount010($expressinfo);
@@ -466,6 +469,10 @@ class Helper {
 			}
 		}
 		return $amount;
+	}
+
+	static function amount0755($expressinfo) {
+		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('price', 'asc')->first();
 	}
 
 	/**
