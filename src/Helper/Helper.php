@@ -247,7 +247,10 @@ class Helper {
 					list($data[$key]['lng'], $data[$key]['lat']) = explode(',', $data[$key]['location']);
 					$data[$key]['ring'] = self::getRing($data[$key]['lng'], $data[$key]['lat']);
 					$data[$key]['citycode'] = $obj->geocodes[$key]->citycode;
-
+					// 苏州强制上海
+					if ($data[$key]['citycode'] == '0512') {
+						$data[$key]['citycode'] = '021';
+					}
 					// $distance = self::get_distance($bd[$key], $data[$key]['location']);
 					// if ($distance > 1) {
 					// 	$data[$key] = null;
@@ -260,6 +263,9 @@ class Helper {
 				$data['district'] = $obj->geocodes[0]->province . $obj->geocodes[0]->city;
 				list($data['lng'], $data['lat']) = explode(',', $data['location']);
 				$data['citycode'] = $obj->geocodes[0]->citycode;
+				if ($data['citycode'] == '0512') {
+					$data['citycode'] = '021';
+				}
 				// $amap = explode(',', $data['location']);
 				// $distance = self::get_distance($bd, $amap);
 				// // 界定值 1KM
@@ -399,15 +405,13 @@ class Helper {
 			// distance
 			$product_price = self::amount021($expressinfo);
 			break;
-		case '0755': //深圳计价
-			$product_price = self::amount0755($expressinfo);
-			break;
 		default:
 			// 默认北京计价策略
 			$product_price = self::amount010($expressinfo);
 			break;
 		}
 		// var_dump($product_price);
+
 		if (!is_null($product_price)) {
 			$channel_price = \Base\Models\ChannelPrice::where('product_price_id', $product_price->id)
 				->where('channel_id', $channel_id)->first();
@@ -420,34 +424,40 @@ class Helper {
 			}
 		}
 
-		// 补充重量加价
-		if(isset($expressinfo['cargo_weight'])){
-			$weight = (int)$expressinfo['cargo_weight'];
-			if($expressinfo['city_code'] == '021' && $expressinfo['product_id'] == 4){
-				//大闸蟹 1/1,2/1
-				// $famount = 12;
-				$add_amount = 2;
-				$amount = $weight > 1 ? $amount + $add_amount * ($weight-1):$amount;
-			}else{
-				//其他 1/10,2/1
-				$add_amount = 2;
-				$amount = $weight > 10 ? $amount + $add_amount * ($weight-10):$amount;
-			}
-		}
-		
-		$amount = $amount > 0 ? $amount : 0;
+		// 补充续重
+
+//		 	$weight = (float) $expressinfo['cargo_weight'];
+		//		 	//定一个规则
+		//		 	$famount = $amount;
+		//		 	// 基础价格
+		//		 	$samount = 2;
+		//
+		//		 	// 9KG
+		//		 	// 每公斤加4块
+		//		 	$amount = $weight > 10 ? $famount + ($samount * ($weight - 10)) : $famount;
+		//		 	//var_dump($amount);
+		//		// 上海无续重
+		//		$amount = $amount > 0 ? $amount : 0;
+		// var_dump($amount);
 		return $amount;
 	}
 	static function amount010($expressinfo) {
 		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('end_ring', $expressinfo['est_rec_ring'])->where('city_code', $expressinfo['city_code'])->first();
 	}
 	static function amount021($expressinfo) {
-		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('distance', 'asc')->orderBy('price', 'asc')->first();
+		$amount = \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->where('start_area', $expressinfo['est_send_area'])->where('end_area', $expressinfo['est_rec_area'])->orderBy('price', 'asc')->first();
+		if (is_null($amount)) {
+			if ($expressinfo['est_send_area'] == 'SZ') {
+				$temp = new \stdClass();
+				$temp->id = 0;
+				$temp->price = '12.00';
+				return $temp;
+			} else {
+				return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('distance', 'asc')->orderBy('price', 'asc')->first();
+			}
+		}
+		return $amount;
 		// ->where('start_area', $expressinfo['est_send_area'])->where('end_area', $expressinfo['est_rec_area'])
-	}
-
-	static function amount0755($expressinfo) {
-		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('price', 'asc')->first();
 	}
 
 	/**
@@ -555,12 +565,12 @@ class Helper {
 		return $data;
 	}
 
-	static function geoAddressAll($keywords,$city_code) {
+	static function geoAddressAll($keywords, $city_code) {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
 		$key = config('amap.key', '8c3a4fd651b433bc8492447c3be696cb');
-		if($city_code){
+		if ($city_code) {
 			$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords . '&city=' . $city_code;
-		}else{
+		} else {
 			$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords;
 		}
 		//$apiURL = config('amap.url', 'http://restapi.amap.com/v3') . '/place/text?key=' . $key . '&extensions=base&children=1&citylimit=true&offset=10&page=1&keywords=' . $keywords;
@@ -569,7 +579,7 @@ class Helper {
 		$obj = json_decode($res->getBody());
 		return $obj;
 	}
-	
+
 	static function geoAddressWithRing($keywords) {
 		$data = self::geoAddress($keywords);
 		$data['ring'] = self::getRing($data['lng'], $data['lat']);
@@ -629,6 +639,9 @@ class Helper {
 		$cityCode = '010';
 		if ($obj->status == 1) {
 			$cityCode = $obj->regeocode->addressComponent->citycode;
+		}
+		if ($cityCode == '0512') {
+			$cityCode = '021';
 		}
 		return $cityCode;
 	}
