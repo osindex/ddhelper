@@ -437,11 +437,9 @@ class Helper {
 			$product_price = self::amount010($expressinfo);
 			break;
 		}
-		// var_dump($product_price);
 		if (!is_null($product_price)) {
 			$channel_price = \Base\Models\ChannelPrice::where('product_price_id', $product_price->id)
 				->where('channel_id', $channel_id)->first();
-			// var_dump($channel_price);
 			if (!is_null($channel_price)) {
 				//渠道优惠
 				$amount = $product_price->price - abs($channel_price->amount);
@@ -449,22 +447,6 @@ class Helper {
 				$amount = $product_price->price;
 			}
 		}
-
-		// 补充重量加价
-		if(isset($expressinfo['cargo_weight'])){
-			$weight = (int)$expressinfo['cargo_weight'];
-			if($expressinfo['city_code'] == '021' && $expressinfo['product_id'] == 4){
-				//大闸蟹 1/1,2/1
-				// $famount = 12;
-				$add_amount = 2;
-				$amount = $weight > 1 ? $amount + $add_amount * ($weight-1):$amount;
-			}else{
-				//其他 1/10,2/1
-				$add_amount = 2;
-				$amount = $weight > 10 ? $amount + $add_amount * ($weight-10):$amount;
-			}
-		}
-		
 		$amount = $amount > 0 ? $amount : 0;
 		return $amount;
 	}
@@ -472,8 +454,18 @@ class Helper {
 		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('end_ring', $expressinfo['est_rec_ring'])->where('city_code', $expressinfo['city_code'])->first();
 	}
 	static function amount021($expressinfo) {
-		return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('distance', 'asc')->orderBy('price', 'asc')->first();
-		// ->where('start_area', $expressinfo['est_send_area'])->where('end_area', $expressinfo['est_rec_area'])
+		$amount = \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->where('start_area', $expressinfo['est_send_area'])->where('end_area', $expressinfo['est_rec_area'])->orderBy('price', 'asc')->first();
+		if (is_null($amount)) {
+			if ($expressinfo['est_send_area'] == 'SZ') {
+				$temp = new \stdClass();
+				$temp->id = 0;
+				$temp->price = '12.00';
+				return $temp;
+			} else {
+				return \Base\Models\ProductPrice::where('product_id', $expressinfo['product_id'])->where('city_code', $expressinfo['city_code'])->orderBy('distance', 'asc')->orderBy('price', 'asc')->first();
+			}
+		}
+		return $amount;
 	}
 
 	/**
@@ -554,12 +546,17 @@ class Helper {
 			}
 			unset($a, $check);
 		}
-		$nid = \Base\Models\Layer::find($layer_id)->rollback_layer_id;
-		if ($nid) {
-			return self::gerAreaByLayer($lng, $lat, $nid);
-		} else {
+		try {
+			$nid = \Base\Models\Layer::find($layer_id)->rollback_layer_id;
+			if ($nid) {
+				return self::gerAreaByLayer($lng, $lat, $nid);
+			} else {
+				return null;
+			}
+		} catch (\Exception $e) {
 			return null;
 		}
+
 	}
 	static function geoAddress($keywords, $cityCode = '010') {
 		$client = new \GuzzleHttp\Client(['expect' => false]);
@@ -580,7 +577,7 @@ class Helper {
 		return $data;
 	}
 	static function geoAddressWithRing($keywords, $cityCode = '010') {
-		$data = self::geoAddress($keywords);
+		$data = self::geoAddress($keywords, $cityCode);
 		$data['ring'] = self::getRing($data['lng'], $data['lat']);
 		return $data;
 	}
@@ -594,6 +591,9 @@ class Helper {
 			break;
 		case '028':
 			$city = '成都市';
+			break;
+		case '0755':
+			$city = '深圳市';
 			break;
 
 		default:
